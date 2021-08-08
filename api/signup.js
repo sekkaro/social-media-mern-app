@@ -6,18 +6,17 @@ const FollowerModel = require("../models/FollowerModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const isEmail = require("validator/lib/isEmail");
-const { userPng } = require("../utilsServer/userPng");
-const { regexUserName } = require("../utils/authUser");
+const userPng = require("../utilsServer/userPng");
+const { regexUserName } = require("../utilsServer/constants");
 
 router.get("/:username", async (req, res) => {
   const { username } = req.params;
-
   try {
-    if (username.length < 1 || regexUserName.test(username)) {
+    if (username.length < 1 || !regexUserName.test(username)) {
       return res.status(401).send("Invalid");
     }
 
-    const user = await userModel.findOne({ username: username.toLowerCase() });
+    const user = await UserModel.findOne({ username: username.toLowerCase() });
 
     if (user) return res.status(401).send("Username already taken");
 

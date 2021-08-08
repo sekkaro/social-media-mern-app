@@ -1,12 +1,17 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Button, Divider, Form, Message, Segment } from "semantic-ui-react";
+import axios from "axios";
+
 import CommonInputs from "../components/common/CommonInputs";
 import ImageDropDiv from "../components/common/ImageDropDiv";
 import {
   FooterMessage,
   HeaderMessage,
 } from "../components/common/WelcomeMessage";
-import { regexUserName } from "../utils/authUser";
+import { regexUserName } from "../utils/constants";
+import { uploadPic } from "../utils/uploadPicToCloudinary";
+import { registerUser } from "../utils/authUser";
+let cancel;
 
 const Signup = () => {
   const [user, setUser] = useState({
@@ -43,6 +48,35 @@ const Signup = () => {
     setSubmitDisabled(!isUserValid);
   }, [user]);
 
+  const checkUsername = async () => {
+    setUsernameLoading(true);
+    try {
+      cancel && cancel();
+      const CancelToken = axios.CancelToken;
+      const res = await axios.get(
+        `${process.env.BASE_URL}/api/signup/${username}`,
+        {
+          cancelToken: new CancelToken((canceler) => (cancel = canceler)),
+        }
+      );
+      if (res.data === "Available" && username) {
+        setErrorMsg(null);
+        setUsernameAvailable(true);
+        setUser((prev) => ({ ...prev, username }));
+      }
+    } catch (err) {
+      if (username) {
+        setErrorMsg("Username Not Available");
+        setUsernameAvailable(false);
+      }
+    }
+    setUsernameLoading(false);
+  };
+
+  useEffect(() => {
+    checkUsername();
+  }, [username]);
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
 
@@ -54,8 +88,20 @@ const Signup = () => {
     setUser((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormLoading(true);
+    let profilePicUrl;
+    if (media) {
+      profilePicUrl = await uploadPic(media);
+      if (!profilePicUrl) {
+        setFormLoading(false);
+        return setErrorMsg("Error Uploading Image");
+      }
+    }
+
+    await registerUser(user, profilePicUrl, setErrorMsg, setFormLoading);
+    setFormLoading(false);
   };
   return (
     <>

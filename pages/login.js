@@ -4,6 +4,7 @@ import {
   FooterMessage,
   HeaderMessage,
 } from "../components/common/WelcomeMessage";
+import { loginUser } from "../utils/authUser";
 
 const Login = () => {
   const [user, setUser] = useState({
@@ -31,8 +32,11 @@ const Login = () => {
     setSubmitDisabled(!isUserValid);
   }, [user]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormLoading(true);
+    await loginUser(user, setErrorMsg);
+    setFormLoading(false);
   };
   return (
     <>
