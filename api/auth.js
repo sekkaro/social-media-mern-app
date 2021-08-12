@@ -1,9 +1,24 @@
 const express = require("express");
 const router = express.Router();
 const UserModel = require("../models/UserModel");
+const FollowerModel = require("../models/FollowerModel");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const isEmail = require("validator/lib/isEmail");
+const authMiddleware = require("../middleware/authMiddleware");
+
+router.get("/", authMiddleware, async (req, res) => {
+  const { userId } = req;
+
+  try {
+    const user = await UserModel.findById(userId);
+    const userFollowStats = await FollowerModel.findOne({ user: userId });
+    return res.status(200).json({ user, userFollowStats });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).send("Server error");
+  }
+});
 
 router.post("/", async (req, res) => {
   const { email, password } = req.body.user;
